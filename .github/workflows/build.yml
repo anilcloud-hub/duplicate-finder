@@ -1,0 +1,40 @@
+# Builds the Windows .exe AND the macOS .app automatically in the cloud.
+# Push a tag like v1.0.0 (or run manually from the Actions tab) and download
+# the finished apps from the run's "Artifacts" section. No Mac/PC needed.
+name: Build apps
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r dedup/requirements.txt pyinstaller
+      - name: Build
+        run: pyinstaller --noconfirm DuplicateFinder.spec
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path dist/DuplicateFinder -DestinationPath DuplicateFinder-windows.zip
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: ditto -c -k --keepParent "dist/Duplicate Finder.app" DuplicateFinder-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuplicateFinder-${{ runner.os }}
+          path: |
+            DuplicateFinder-windows.zip
+            DuplicateFinder-macos.zip
+          if-no-files-found: ignore

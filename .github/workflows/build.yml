@@ -1,12 +1,8 @@
-# Builds the Windows .exe AND the macOS .app automatically in the cloud.
-# Push a tag like v1.0.0 (or run manually from the Actions tab) and download
-# the finished apps from the run's "Artifacts" section. No Mac/PC needed.
 name: Build apps
 on:
   workflow_dispatch:
   push:
     tags: ['v*']
-
 jobs:
   build:
     strategy:
